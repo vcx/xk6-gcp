@@ -27,14 +27,8 @@ func (g *Gcp) pubsubClient() {
 			os.Setenv("PUBSUB_EMULATOR_HOST", g.emulatorHost)
 			// Emulators has no capability to authenticate
 			options = append(options, option.WithoutAuthentication())
-		} else {
-			jwt, err = getJwtConfig(g.keyByte, g.scope)
-			if err != nil {
-				log.Fatalf("could not get JWT config with scope %s <%v>.", g.scope, err)
-			}
-			options = append(options, option.WithTokenSource(jwt.TokenSource(ctx)))
-		}
-
+		} 
+		
 		client, err = pubsub.NewClient(ctx, g.projectId, options...)
 		if err != nil {
 			log.Fatalf("could not initialize PubSub client <%v>", err)
