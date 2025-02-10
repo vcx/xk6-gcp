@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"reflect"
 
 	"cloud.google.com/go/pubsub"
@@ -93,7 +92,7 @@ func (mi *ModuleInstance) Exports() modules.Exports {
 
 func (mi *ModuleInstance) newGcp(c sobek.ConstructorCall) *sobek.Object {
 	rt := mi.vu.Runtime()
-	const envKey = "GOOGLE_SERVICE_ACCOUNT_KEY"
+	// const envKey = "GOOGLE_SERVICE_ACCOUNT_KEY"
 	var options GcpConfig
 
 	err := rt.ExportTo(c.Argument(0), &options)
@@ -104,7 +103,7 @@ func (mi *ModuleInstance) newGcp(c sobek.ConstructorCall) *sobek.Object {
 
 	g, err := newGcpConstructor(
 		withGcpEmulatorHost(options.EmulatorHost),
-		withGcpConstructorKey(options.Key, envKey),
+		// withGcpConstructorKey(options.Key, envKey),
 		withGcpConstructorScope(options.Scope),
 		withGcpConstructorProjectId(options.ProjectId),
 	)
@@ -113,15 +112,6 @@ func (mi *ModuleInstance) newGcp(c sobek.ConstructorCall) *sobek.Object {
 	}
 
 	return rt.ToValue(g).ToObject(rt)
-}
-
-func convertToByte(key interface{}) ([]byte, error) {
-	b, err := json.Marshal(key)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal key <%w>", err)
-	}
-
-	return b, nil
 }
 
 // The function creates a new instance of the Gcp struct with specified options.
@@ -137,43 +127,6 @@ func newGcpConstructor(opts ...Option) (Gcp, error) {
 	}
 
 	return g, nil
-}
-
-func withGcpConstructorKey(key ServiceAccountKey, env string) func(*Gcp) error {
-	return func(g *Gcp) error {
-		if !isStructEmpty(key) {
-			b, err := convertToByte(key)
-			if err != nil {
-				return err
-			}
-			g.keyByte = b
-
-			return nil
-		}
-
-		if envString := os.Getenv(env); envString != "" {
-			s := &ServiceAccountKey{}
-			err := json.Unmarshal([]byte(envString), &s)
-			if err != nil {
-				return fmt.Errorf("cannot unmarshal environment variable %v <%w>", env, err)
-			}
-
-			b, err := convertToByte(s)
-			if err != nil {
-				return err
-			}
-			g.keyByte = b
-
-			return nil
-		}
-
-		// Emulators doesn't need service account
-		if g.emulatorHost != "" {
-			return nil
-		}
-
-		return fmt.Errorf("service account key not found. Please use %s or input 'key' parameter", env)
-	}
 }
 
 func withGcpConstructorScope(scope []string) func(*Gcp) error {
