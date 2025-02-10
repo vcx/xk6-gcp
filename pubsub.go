@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
 )
 
@@ -21,7 +20,6 @@ func (g *Gcp) pubsubClient() {
 		var err error
 		var client *pubsub.Client
 		var options []option.ClientOption
-		var jwt *jwt.Config
 
 		if g.emulatorHost != "" {
 			os.Setenv("PUBSUB_EMULATOR_HOST", g.emulatorHost)
